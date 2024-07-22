@@ -13,10 +13,15 @@ connectDB(process.env.MONGODB_URL).catch((err) => {
 
 // GET route to fetch the configuration
 router.get('/fetch/ChatbotUi', async (req, res) => {
+    const clientId = req.query.clientId; // assuming clientId is passed as a query parameter
+    if (!clientId) {
+        return res.status(400).json({ message: 'Client ID is required' });
+    }
     try {
-        let config = await paramsModel.findOne();
+        let config = await paramsModel.findOne({ clientId });
         if (!config) {
-            config = await paramsModel.create(req.body); // Create with default or specified values
+            config = new paramsModel({ clientId });
+            await config.save();
         }
         res.json(config);
     } catch (err) {
@@ -26,10 +31,14 @@ router.get('/fetch/ChatbotUi', async (req, res) => {
 
 // POST route to update the configuration
 router.post('/update/ChatbotUi', async (req, res) => {
+    const clientId = req.body.clientId; // assuming clientId is passed in the body
+    if (!clientId) {
+        return res.status(400).json({ message: 'Client ID is required' });
+    }
     try {
-        let config = await paramsModel.findOne();
+        let config = await paramsModel.findOne({ clientId });
         if (!config) {
-            config = new paramsModel(req.body);
+            config = new paramsModel({ ...req.body, clientId });
         } else {
             Object.assign(config, req.body);
         }

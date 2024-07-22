@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clients = require('./clients');
 const Schema = mongoose.Schema;
 
 // Define the schema for chatbot configuration
@@ -10,7 +11,7 @@ const ChatbotUiSchema = new Schema({
     },
     aiName: {
         type: String,
-        default: 'PrimeBotChat'
+        default: 'PrimeBot'
     },
     startSentence: {
         type: String,
@@ -48,6 +49,11 @@ const ChatbotUiSchema = new Schema({
         type: String,
         default: '#E0E0E0'
     },
+    clientId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Client',
+        required: true
+    }
 });
 
 // Create the model from the schema
