@@ -12,6 +12,24 @@ connectDB(process.env.MONGODB_URL).catch((err) => {
   process.exit(1);
 });
 
+// GET route to fetch the configuration
+router.get("/fetch", async (req, res) => {
+  const clientId = req.query.clientId; // assuming clientId is passed as a query parameter
+  if (!clientId) {
+    return res.status(400).json({ message: 'Client ID is required' });
+  }
+  try {
+    let config = await Parameters.findOne({ clientId });
+    if (!config) {
+      config = new Parameters({ clientId });
+      await config.save();
+    }
+    res.json(config);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
     const { client_id, max_tokens, temperature, top_p, API_key } = req.body;
