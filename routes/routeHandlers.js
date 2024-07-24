@@ -5,6 +5,7 @@ const chatbotConfig = require("./chatbotConfig");
 const login = require("./login");
 const signup = require("./signup");
 const params_route = require("./ChatbotUiApi");
+const show = require("./show");
 function setupRoutes(app) {
   app.use("/", indexRouter);
   app.use("/users", usersRouter);
@@ -13,6 +14,7 @@ function setupRoutes(app) {
   app.use("/login", login);
   app.use("/signup", signup);
   app.use("/ParamsApi", params_route);
+  app.use("/show", show);
 }
 
 module.exports = setupRoutes;

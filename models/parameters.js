@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const parametersSchema = new mongoose.Schema({
+  clientId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Client",
+  },
   model: {
     type: String,
     default: "gpt-3.5-turbo",

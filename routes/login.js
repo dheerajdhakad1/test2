@@ -28,7 +28,7 @@ router.post("/", async (req, res) => {
     }
 
     // Successful login
-    return res.status(200).json({ message: "User logged in successfully" });
+    return res.status(200).json({ message: "User logged in successfully" , user_id: user._id });
   } catch (error) {
     console.error("Error during login:", error);
     return res.status(500).json({ error: "Internal server error" });
