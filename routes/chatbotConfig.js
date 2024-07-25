@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose"); // Import mongoose for ID validation
 const Parameters = require("../models/parameters");
 const Client = require("../models/clients");
 const dotenv = require("dotenv");
@@ -12,27 +13,47 @@ connectDB(process.env.MONGODB_URL).catch((err) => {
   process.exit(1);
 });
 
-// GET route to fetch the configuration
-router.get("/fetch", async (req, res) => {
-  const clientId = req.query.clientId; // assuming clientId is passed as a query parameter
-  if (!clientId) {
-    return res.status(400).json({ message: 'Client ID is required' });
-  }
+router.post("/fetch/chatbotConfig", async (req, res) => {
   try {
-    let config = await Parameters.findOne({ clientId });
-    if (!config) {
-      config = new Parameters({ clientId });
-      await config.save();
+    const { client_id } = req.body;
+
+    // Validate the client ID
+    if (!mongoose.Types.ObjectId.isValid(client_id)) {
+      return res.status(400).json({ error: "Invalid client ID" });
     }
-    res.json(config);
+
+    const client = await Client.findById(client_id).populate('parameters');
+
+    if (!client) {
+      return res.status(404).json({ error: "Client not found" });
+    }
+
+    const parameters = client.parameters;
+    if (!parameters) {
+      return res.status(404).json({ error: "Parameters not found for the client" });
+    }
+
+    return res.status(200).json({
+      max_tokens: parameters.max_tokens,
+      temperature: parameters.temperature,
+      top_p: parameters.top_p,
+      API_key: parameters.API_key
+    });
+
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Error during fetching client details: ", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/update/chatbotConfig", async (req, res) => {
   try {
     const { client_id, max_tokens, temperature, top_p, API_key } = req.body;
+
+    // Validate the client ID
+    if (!mongoose.Types.ObjectId.isValid(client_id)) {
+      return res.status(400).json({ error: "Invalid client ID" });
+    }
 
     // Find the client by ID
     const client = await Client.findById(client_id).populate("parameters");
@@ -40,26 +61,20 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ error: "Client not found" });
     }
 
-    // If parameters document doesn't exist, create a new one
+    // Get the existing parameters or return an error if they don't exist
     let parameters = client.parameters;
     if (!parameters) {
-      parameters = new Parameters();
+      return res.status(404).json({ error: "Parameters not found for the client" });
     }
 
-    // Update the parameters
-    parameters.max_tokens = max_tokens || parameters.max_tokens;
-    parameters.temperature = temperature || parameters.temperature;
-    parameters.top_p = top_p || parameters.top_p;
-    parameters.API_key = API_key || parameters.API_key;
+    // Update the existing parameters
+    parameters.max_tokens = max_tokens ?? parameters.max_tokens;
+    parameters.temperature = temperature ?? parameters.temperature;
+    parameters.top_p = top_p ?? parameters.top_p;
+    parameters.API_key = API_key ?? parameters.API_key;
 
-    // Save the parameters
+    // Save the updated parameters
     await parameters.save();
-
-    // Update the client with the parameters reference if it's a new parameters document
-    if (!client.parameters) {
-      client.parameters = parameters._id;
-      await client.save();
-    }
 
     res.status(200).json({ message: "Parameters updated successfully", parameters });
   } catch (error) {

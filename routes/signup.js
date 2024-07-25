@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Client = require("../models/clients");
+const Parameters = require("../models/parameters"); // Include the Parameters model
 const dotenv = require("dotenv");
 const connectDB = require("../database/connect");
 const bcrypt = require("bcrypt");
@@ -25,8 +26,17 @@ router.post("/", async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const newUser = { email, password: hashedPassword, clientName };
+    // Create default parameters
+    const defaultParameters = new Parameters();
+    await defaultParameters.save();
+
+    // Create new client with default parameters
+    const newUser = { 
+      email, 
+      password: hashedPassword, 
+      clientName, 
+      parameters: defaultParameters._id 
+    };
     const client = await Client.create(newUser);
 
     if (client) {
